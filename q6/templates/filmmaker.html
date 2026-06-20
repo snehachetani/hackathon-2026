@@ -1,0 +1,671 @@
+<title>Filmmaker Agent — Allgäuer Latschenkiefer</title>
+<style>
+  :root {
+    --bg:       #090b12;
+    --surface:  #10121c;
+    --card:     #141824;
+    --border:   #1d2235;
+    --text:     #e4e8f0;
+    --muted:    #606880;
+    --green:    #3a9c28;
+    --green-l:  #6dd65a;
+    --yellow:   #f5c518;
+    --red-soft: #e07c7c;
+    --mono:     'Courier New', Courier, monospace;
+    --sans:     system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    overflow: hidden;
+  }
+
+  /* ── Header ─────────────────────────────────────────────────── */
+  .hdr {
+    height: 46px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 22px;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .hdr-badge {
+    background: var(--green);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 3px 9px;
+    border-radius: 3px;
+  }
+  .hdr-title { font-size: 13px; font-weight: 600; }
+  .hdr-sub   { font-size: 11px; color: var(--muted); margin-left: auto; }
+
+  /* ── Layout ─────────────────────────────────────────────────── */
+  .layout {
+    display: grid;
+    grid-template-columns: 290px 1fr;
+    height: calc(100vh - 46px);
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ────────────────────────────────────────────────── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 18px 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .fg label {
+    display: block;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    margin-bottom: 5px;
+  }
+
+  select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 7px 10px;
+    font-size: 13px;
+    font-family: var(--sans);
+    cursor: pointer;
+  }
+  select:focus { outline: none; border-color: var(--green); }
+
+  .btn-gen {
+    width: 100%;
+    margin-top: 4px;
+    padding: 10px;
+    background: var(--green);
+    border: none;
+    border-radius: 7px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+    letter-spacing: 0.03em;
+  }
+  .btn-gen:hover   { background: #49b833; }
+  .btn-gen:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .sz-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 12px;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  .sz-box h4 {
+    font-size: 9px;
+    color: var(--green-l);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .sz-row { display: flex; justify-content: space-between; }
+  .sz-val { font-family: var(--mono); color: var(--yellow); }
+  .sz-divider { border-top: 1px solid var(--border); margin: 6px 0; padding-top: 6px; }
+  .sz-safe { color: var(--green-l) !important; }
+
+  /* ── Main area ──────────────────────────────────────────────── */
+  .main {
+    overflow-y: auto;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* ── Log box ────────────────────────────────────────────────── */
+  .log-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    min-height: 52px;
+    max-height: 120px;
+    overflow-y: auto;
+  }
+  .ll       { margin: 2px 0; }
+  .ll.done  { color: var(--green-l); }
+  .ll.err   { color: var(--red-soft); }
+
+  /* ── Tabs ───────────────────────────────────────────────────── */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+  .tab {
+    padding: 7px 18px;
+    font-size: 13px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.12s;
+    font-family: var(--sans);
+  }
+  .tab.active { color: var(--text); border-bottom-color: var(--green); }
+  .tab-pane         { display: none; }
+  .tab-pane.active  { display: block; }
+
+  /* ── Meta bar ───────────────────────────────────────────────── */
+  .meta-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .mp {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 3px 12px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .mp span { color: var(--text); }
+
+  /* ── Hook banner ────────────────────────────────────────────── */
+  .hook-banner {
+    background: rgba(245,197,24,0.07);
+    border: 1px solid rgba(245,197,24,0.22);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+  }
+  .hook-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--yellow); margin-bottom: 4px; }
+  .hook-text  { font-size: 15px; font-weight: 600; }
+
+  /* ── Scene cards ────────────────────────────────────────────── */
+  .scene-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .scene-hdr {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .scene-num {
+    width: 28px; height: 28px;
+    background: var(--green);
+    color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .scene-dur { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .scene-vis { font-size: 13px; color: var(--text); font-weight: 500; }
+
+  .sf { margin-bottom: 8px; }
+  .sl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 3px; }
+  .sv { font-size: 13px; line-height: 1.5; }
+
+  .pill {
+    display: inline-block;
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 12px;
+    margin: 2px 4px 2px 0;
+  }
+  .pill-hl  { background: rgba(245,197,24,0.1);  border: 1px solid rgba(245,197,24,0.28); color: var(--yellow); }
+  .pill-sub { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); color: #b8c0cc; }
+  .pill-pos { background: rgba(100,110,210,0.1);  border: 1px solid rgba(100,110,210,0.25); color: #9aabdd; }
+
+  .safe-note { font-size: 11px; color: var(--muted); font-style: italic; margin-top: 4px; }
+
+  /* ── Music / HWG row ────────────────────────────────────────── */
+  .bottom-row { display: flex; gap: 10px; flex-wrap: wrap; padding: 10px 0; }
+  .music-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(58,156,40,0.12); border: 1px solid rgba(58,156,40,0.28);
+    border-radius: 14px; padding: 4px 12px; font-size: 12px; color: var(--green-l);
+  }
+  .hwg-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(109,214,90,0.08); border: 1px solid rgba(109,214,90,0.25);
+    border-radius: 4px; padding: 4px 10px; font-size: 11px; color: #5ec87c;
+  }
+
+  .cta-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-top: 8px;
+  }
+  .cta-card h4 { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 6px; }
+  .cta-text { font-size: 17px; font-weight: 700; color: var(--yellow); }
+
+  /* ── Storyboard ─────────────────────────────────────────────── */
+  .strip-wrap {
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .strip { display: flex; gap: 16px; width: max-content; padding: 4px 0; }
+  .frame-box { text-align: center; }
+  .frame-box img {
+    display: block;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .frame-lbl { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  .sb-intro {
+    font-size: 12px; color: var(--muted);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    line-height: 1.6;
+  }
+  .sb-intro strong { color: var(--text); }
+
+  /* ── Caption cards ──────────────────────────────────────────── */
+  .cap-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .cap-card h4 { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--green-l); margin-bottom: 8px; }
+  .cap-text { font-size: 14px; line-height: 1.7; }
+
+  .tag-wrap { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag {
+    background: rgba(58,156,40,0.12);
+    border: 1px solid rgba(58,156,40,0.25);
+    color: var(--green-l);
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  .cta-variants { display: flex; flex-direction: column; gap: 6px; }
+  .cta-var {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  /* ── Results area ───────────────────────────────────────────── */
+  .results-area { display: none; }
+  .results-area.visible { display: block; }
+
+  /* ── Scrollbars ─────────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+
+<!-- Header -->
+<div class="hdr">
+  <span class="hdr-badge">FILMMAKER</span>
+  <span class="hdr-title">Allgäuer Latschenkiefer — Content Agent</span>
+  <span class="hdr-sub">Dr. Theiss Naturwaren GmbH &nbsp;·&nbsp; TikTok / Instagram Reels · 1080×1920</span>
+</div>
+
+<div class="layout">
+
+  <!-- Sidebar: form -->
+  <aside class="sidebar">
+
+    <div class="fg">
+      <label>Product (§2–3 catalogue)</label>
+      <select id="sel-sku">
+        <optgroup label="★ Hero SKUs (brief §6)">
+          {% for p in products if p.hero %}
+          <option value="{{ p.sku }}">{{ p.name }} — {{ p.line }}</option>
+          {% endfor %}
+        </optgroup>
+        <optgroup label="Full catalogue">
+          {% for p in products if not p.hero %}
+          <option value="{{ p.sku }}">{{ p.name }} — {{ p.line }}</option>
+          {% endfor %}
+        </optgroup>
+      </select>
+    </div>
+
+    <div class="fg">
+      <label>Content Angle</label>
+      <select id="sel-angle">
+        {% for key, desc in angles.items() %}
+        <option value="{{ key }}">{{ desc }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="fg">
+      <label>Platform</label>
+      <select id="sel-platform">
+        <option value="TikTok">TikTok</option>
+        <option value="Instagram Reels">Instagram Reels</option>
+        <option value="TikTok & Instagram Reels">Both (TikTok + Instagram)</option>
+      </select>
+    </div>
+
+    <div class="fg">
+      <label>Script Language</label>
+      <select id="sel-lang">
+        <option value="de">Deutsch</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+
+    <button class="btn-gen" id="btn-gen" onclick="startGeneration()">
+      ▶&nbsp; Generate Reel Brief
+    </button>
+
+    <!-- Safe zone reference -->
+    <div class="sz-box">
+      <h4>Safe Zone Reference — 1080×1920</h4>
+      <div class="sz-row"><span>Top margin</span>     <span class="sz-val">{{ safe_zones.top }}px</span></div>
+      <div class="sz-row"><span>Bottom limit</span>   <span class="sz-val">{{ safe_zones.bottom }}px ↑</span></div>
+      <div class="sz-row"><span>Left margin</span>    <span class="sz-val">{{ safe_zones.left }}px</span></div>
+      <div class="sz-row"><span>Right limit</span>    <span class="sz-val">{{ safe_zones.right }}px ←</span></div>
+      <div class="sz-divider sz-row">
+        <span>Safe band</span>
+        <span class="sz-val sz-safe">{{ safe_zones.right - safe_zones.left }}×{{ safe_zones.bottom - safe_zones.top }}px</span>
+      </div>
+      <div style="font-size:10px; margin-top:6px; color:#3d4460; line-height:1.5;">
+        Bottom 600px reserved for caption bar.<br>Right 180px reserved for action icons.
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- Main content -->
+  <main class="main">
+
+    <div class="log-box" id="log-box">
+      <div class="ll" style="color:#2a3050;">— Select a product and angle, then click Generate —</div>
+    </div>
+
+    <div class="results-area" id="results-area">
+
+      <div class="meta-bar" id="meta-bar"></div>
+
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('script')">&#x1F3AC; Script</button>
+        <button class="tab" onclick="switchTab('video')">&#x25B6; Video</button>
+        <button class="tab" onclick="switchTab('storyboard')">&#x1F4F7; Storyboard</button>
+        <button class="tab" onclick="switchTab('captions')">&#x1F4CB; Captions</button>
+      </div>
+
+      <!-- Script tab -->
+      <div class="tab-pane active" id="tab-script">
+        <div id="hook-box"></div>
+        <div id="scenes-box"></div>
+        <div id="music-box"></div>
+      </div>
+
+      <!-- Video tab -->
+      <div class="tab-pane" id="tab-video">
+        <div id="video-loading" style="display:none; padding:40px; text-align:center; color:var(--muted); font-size:13px;">
+          Assembling MP4… this takes ~10s
+        </div>
+        <div id="video-container" style="display:none;">
+          <div style="display:flex; align-items:flex-start; gap:24px; flex-wrap:wrap;">
+            <div style="flex-shrink:0;">
+              <video id="reel-video" controls
+                     style="border-radius:12px; border:1px solid var(--border); background:#000; height:600px; width:auto; display:block;">
+              </video>
+              <div style="margin-top:10px; display:flex; gap:10px;">
+                <a id="video-download" href="#" download
+                   style="display:inline-flex; align-items:center; gap:6px;
+                          background:var(--green); color:#fff; text-decoration:none;
+                          padding:8px 18px; border-radius:7px; font-size:13px; font-weight:600;">
+                  &#x2B07; Download MP4
+                </a>
+                <span id="video-info" style="font-size:11px; color:var(--muted); align-self:center;"></span>
+              </div>
+            </div>
+            <div style="flex:1; min-width:240px;">
+              <div class="cap-card" style="margin-bottom:10px;">
+                <h4>Format</h4>
+                <div class="cap-text" style="font-family:var(--mono); font-size:12px; color:var(--muted); line-height:1.8;">
+                  1080 × 1920 px &nbsp;|&nbsp; 9:16 vertical<br>
+                  24 fps &nbsp;|&nbsp; H.264 / libx264<br>
+                  No audio (add music in editor)
+                </div>
+              </div>
+              <div class="cap-card">
+                <h4>Safe Zone Compliance</h4>
+                <div style="font-size:12px; color:var(--muted); line-height:1.8;">
+                  ✓ Top margin: {{ safe_zones.top }}px<br>
+                  ✓ Bottom limit: {{ safe_zones.bottom }}px ({{ safe_zones.height - safe_zones.bottom }}px reserved)<br>
+                  ✓ Left: {{ safe_zones.left }}px &nbsp;|&nbsp; Right: {{ safe_zones.right }}px<br>
+                  ✓ All overlays within safe band
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Storyboard tab -->
+      <div class="tab-pane" id="tab-storyboard">
+        <div class="sb-intro">
+          Frames rendered at <strong>25% scale (270×480 px)</strong> — original frame is 1080×1920.
+          <strong style="color:#e07c7c;">Red zones</strong> = platform UI (do not place text).
+          <strong style="color:#6dd65a;">Green border</strong> = safe content area.
+        </div>
+        <div class="strip-wrap"><div class="strip" id="strip"></div></div>
+      </div>
+
+      <!-- Captions tab -->
+      <div class="tab-pane" id="tab-captions">
+        <div id="captions-box"></div>
+      </div>
+
+    </div><!-- /results-area -->
+  </main>
+</div>
+
+<script>
+function switchTab(name) {
+  const names = ['script','video','storyboard','captions'];
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', names[i] === name));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+}
+
+function log(msg, cls = '') {
+  const box = document.getElementById('log-box');
+  const placeholder = box.querySelector('[style]');
+  if (placeholder) box.innerHTML = '';
+  const line = document.createElement('div');
+  line.className = 'll ' + cls;
+  line.textContent = '› ' + msg;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+async function startGeneration() {
+  const btn = document.getElementById('btn-gen');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generating…';
+  document.getElementById('results-area').classList.remove('visible');
+  document.getElementById('log-box').innerHTML = '';
+
+  const payload = {
+    sku:      document.getElementById('sel-sku').value,
+    angle:    document.getElementById('sel-angle').value,
+    platform: document.getElementById('sel-platform').value,
+    language: document.getElementById('sel-lang').value,
+  };
+
+  const res    = await fetch('/generate', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+  const { job_id } = await res.json();
+  const es     = new EventSource('/stream/' + job_id);
+
+  es.onmessage = (e) => {
+    if (e.data === '[DONE]') { es.close(); return; }
+    const msg = JSON.parse(e.data);
+
+    if (msg.error) {
+      log(msg.step, 'err');
+      btn.disabled = false; btn.textContent = '▶  Generate Reel Brief';
+      return;
+    }
+
+    log(msg.step, msg.done ? 'done' : '');
+
+    if (msg.step && msg.step.includes('Assembling')) {
+      document.getElementById('video-loading').style.display = 'block';
+      document.getElementById('video-container').style.display = 'none';
+    }
+
+    if (msg.done && msg.result) {
+      renderResult(msg.result);
+      btn.disabled = false; btn.textContent = '▶  Generate Reel Brief';
+    }
+  };
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderResult(data) {
+  const { script, frames_b64, captions } = data;
+
+  // Meta bar
+  const prod = data.product || {};
+  document.getElementById('meta-bar').innerHTML = [
+    `<div class="mp">Product <span>${esc(script.product)}</span></div>`,
+    `<div class="mp">SKU <span>${esc(script.sku)}</span></div>`,
+    `<div class="mp">Platform <span>${esc(script.platform)}</span></div>`,
+    `<div class="mp">Duration <span>${script.duration_sec}s</span></div>`,
+    prod.season   ? `<div class="mp">Peak Season <span>${esc(prod.season)}</span></div>`   : '',
+    prod.segment  ? `<div class="mp">Segment <span>${esc(prod.segment)}</span></div>`      : '',
+  ].join('');
+
+  // ── Video tab ────────────────────────────────────────────────
+  const vf = data.video_filename;
+  if (vf) {
+    const videoUrl = '/videos/' + vf;
+    const vid = document.getElementById('reel-video');
+    vid.src   = videoUrl;
+    document.getElementById('video-download').href     = videoUrl;
+    document.getElementById('video-download').download = vf;
+    document.getElementById('video-info').textContent  = vf;
+    document.getElementById('video-loading').style.display   = 'none';
+    document.getElementById('video-container').style.display = 'block';
+    switchTab('video');
+  }
+
+  // ── Script tab ───────────────────────────────────────────────
+  document.getElementById('hook-box').innerHTML = `
+    <div class="hook-banner">
+      <div class="hook-label">Opening Hook (0–3 sec)</div>
+      <div class="hook-text">${esc(script.hook)}</div>
+    </div>`;
+
+  document.getElementById('scenes-box').innerHTML = script.scenes.map(sc => {
+    const ov = sc.overlay || {};
+    return `
+    <div class="scene-card">
+      <div class="scene-hdr">
+        <div class="scene-num">${sc.scene_num}</div>
+        <div>
+          <div class="scene-vis">${esc(sc.visual.substring(0,70))}${sc.visual.length>70?'…':''}</div>
+          <div class="scene-dur">${sc.duration_sec}s</div>
+        </div>
+      </div>
+      <div class="sf">
+        <div class="sl">Audio / Voiceover</div>
+        <div class="sv">${esc(sc.audio)}</div>
+      </div>
+      <div class="sf">
+        <div class="sl">Text Overlay</div>
+        <div>
+          <span class="pill pill-hl">▌ ${esc(ov.headline||'')}</span>
+          ${ov.subtext ? `<span class="pill pill-sub">${esc(ov.subtext)}</span>` : ''}
+          <span class="pill pill-pos">y=${ov.y_position||'?'}px · ${esc(ov.style||'')}</span>
+        </div>
+      </div>
+      ${sc.safe_note ? `<div class="safe-note">Safe zone: ${esc(sc.safe_note)}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  document.getElementById('music-box').innerHTML = `
+    <div class="bottom-row">
+      <span class="music-chip">♪ ${esc(script.music)}</span>
+      <span class="hwg-badge">✓ HWG — ${esc(script.hwg_check)}</span>
+    </div>
+    <div class="cta-card">
+      <h4>Call to Action</h4>
+      <div class="cta-text">${esc(script.cta)}</div>
+    </div>`;
+
+  // ── Storyboard tab ───────────────────────────────────────────
+  document.getElementById('strip').innerHTML = frames_b64.map((b64, i) => `
+    <div class="frame-box">
+      <img src="data:image/png;base64,${b64}" width="270" height="480" alt="Scene ${i+1}">
+      <div class="frame-lbl">Scene ${i+1} · ${(script.scenes[i]||{}).duration_sec||'?'}s</div>
+    </div>`).join('');
+
+  // ── Captions tab ─────────────────────────────────────────────
+  const hashtags = (captions.hashtags || script.hashtags || [])
+    .map(h => `<span class="tag">${h.startsWith('#') ? esc(h) : '#'+esc(h)}</span>`).join('');
+
+  const ctaVars = (captions.alt_ctas || [])
+    .map(c => `<div class="cta-var">${esc(c)}</div>`).join('');
+
+  document.getElementById('captions-box').innerHTML = `
+    <div class="cap-card">
+      <h4>TikTok Caption</h4>
+      <div class="cap-text">${esc(captions.tiktok_caption || script.caption)}</div>
+    </div>
+    <div class="cap-card">
+      <h4>Instagram Reels Caption</h4>
+      <div class="cap-text">${esc(captions.instagram_caption || script.caption)}</div>
+    </div>
+    <div class="cap-card">
+      <h4>Hashtags</h4>
+      <div class="tag-wrap">${hashtags}</div>
+    </div>
+    ${ctaVars ? `<div class="cap-card"><h4>CTA Variants</h4><div class="cta-variants">${ctaVars}</div></div>` : ''}`;
+
+  document.getElementById('results-area').classList.add('visible');
+  if (!data.video_filename) switchTab('script');
+}
+</script>
