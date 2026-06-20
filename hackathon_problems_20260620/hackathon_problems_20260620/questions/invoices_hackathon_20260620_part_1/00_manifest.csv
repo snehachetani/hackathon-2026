@@ -1,0 +1,11 @@
+file,vendor,invoice_type,language,format,quality,currency,vat_rate,total
+01_stadtwerke_gas_de.pdf,Stadtwerke München,Gas bill,German,PDF,good,EUR,7%,"258,44 €"
+02_microsoft_licenses_en.pdf,Microsoft Ireland,Software licenses,English,PDF,good,EUR,23%,"€2,407.43"
+03_eon_strom_de.png,E.ON Energie,Electricity bill,German,PNG,bad (grey photocopy),EUR,19%,"163,09 €"
+04_aws_cloud_en.docx,Amazon Web Services,Cloud services,English,DOCX,good,USD,0%,"$7,216.15"
+05_buerobedarf_de.png,Bürobedarf Schmidt,Office supplies,German,PNG,bad (faded/aged),EUR,19%,"841,88 €"
+06_brightpath_consulting_en.docx,Brightpath Consulting,Professional services,English,DOCX,good,EUR,19%,"€26,153.18"
+07_hotel_adlon_de.docx,Hotel Adlon Kempinski,Hotel stay,German,DOCX,good,EUR,7%,"1.625,65 €"
+08_adobe_creativecloud_en.png,Adobe Ireland,Software subscription,English,PNG,bad (photo + coffee stain),EUR,19%,"496,10 €"
+09_telekom_internet_de.pdf,Deutsche Telekom,Internet & telephone,German,PDF,good,EUR,19%,"86,73 €"
+10_dell_hardware_en.png,Dell GmbH,Hardware purchase,English,PNG,bad (angled desk photo),EUR,19%,"€17,814.30"
