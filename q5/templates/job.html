@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interview Support Agent — Kohlpharma</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand: #1a56db;
+      --brand-dark: #1e429f;
+      --brand-light: #ebf5ff;
+      --danger: #dc2626;
+      --danger-light: #fef2f2;
+      --success: #059669;
+      --success-light: #ecfdf5;
+      --warn: #d97706;
+      --warn-light: #fffbeb;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-900: #111827;
+      --radius: 10px;
+      --shadow: 0 1px 3px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.06);
+      --shadow-md: 0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.05);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-900);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--brand-dark);
+      color: #fff;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: var(--shadow-md);
+    }
+    header .logo { font-size: 28px; }
+    header h1 { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+    header p  { font-size: 13px; opacity: .75; margin-top: 1px; }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 20px 60px;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* ── Panel ── */
+    .panel {
+      background: #fff;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-200);
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--gray-700);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── Input panel ── */
+    .input-panel { grid-column: 1; }
+
+    .sample-jobs { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+    .sample-btn {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 10px 14px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-700);
+      transition: all .15s;
+    }
+    .sample-btn:hover { background: var(--brand-light); border-color: var(--brand); color: var(--brand); }
+    .sample-btn.active { background: var(--brand-light); border-color: var(--brand); color: var(--brand-dark); }
+    .sample-btn .badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .badge-tech   { background: #dbeafe; color: #1e40af; }
+    .badge-hybrid { background: #fef3c7; color: #92400e; }
+    .badge-hr     { background: #f0fdf4; color: #166534; }
+
+    .divider { padding: 8px 16px; font-size: 11px; color: #9ca3af; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+
+    textarea {
+      width: 100%;
+      border: none;
+      padding: 14px 16px;
+      font-size: 13px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 160px;
+      color: var(--gray-700);
+      outline: none;
+      border-top: 1px solid var(--gray-200);
+    }
+    textarea:focus { border-top-color: var(--brand); }
+    textarea::placeholder { color: #9ca3af; }
+
+    .analyze-btn {
+      width: calc(100% - 32px);
+      margin: 12px 16px 16px;
+      padding: 13px;
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .analyze-btn:hover:not(:disabled) { background: var(--brand-dark); }
+    .analyze-btn:disabled { opacity: .6; cursor: not-allowed; }
+
+    /* ── Results panel ── */
+    .results-panel { grid-column: 2; }
+
+    .placeholder {
+      padding: 60px 20px;
+      text-align: center;
+      color: #9ca3af;
+    }
+    .placeholder .icon { font-size: 48px; margin-bottom: 12px; }
+    .placeholder p { font-size: 14px; line-height: 1.6; }
+
+    /* ── Loading ── */
+    .loading {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--gray-600);
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--gray-200);
+      border-top-color: var(--brand);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-steps { font-size: 13px; color: #9ca3af; margin-top: 6px; }
+
+    /* ── Overview ── */
+    .overview-box {
+      margin: 16px;
+      padding: 14px 16px;
+      background: var(--brand-light);
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--brand-dark);
+    }
+    .overview-box strong { display: block; margin-bottom: 4px; font-size: 14px; }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 4px; padding: 12px 16px 0; overflow-x: auto; }
+    .tab {
+      padding: 8px 14px;
+      border-radius: 6px 6px 0 0;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      color: var(--gray-600);
+      white-space: nowrap;
+      background: var(--gray-100);
+      transition: all .15s;
+    }
+    .tab:hover { background: var(--gray-200); }
+    .tab.active { background: #fff; border-color: var(--gray-200); border-bottom-color: #fff; color: var(--brand); }
+    .tab-count { font-size: 10px; background: var(--gray-200); border-radius: 10px; padding: 1px 5px; margin-left: 4px; }
+    .tab.active .tab-count { background: var(--brand-light); color: var(--brand); }
+
+    .tab-content { display: none; padding: 16px; }
+    .tab-content.active { display: block; }
+
+    /* ── Question cards ── */
+    .category-section { margin-bottom: 20px; }
+    .category-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gray-700);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .question-card {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    .q-header {
+      padding: 12px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      transition: background .1s;
+    }
+    .q-header:hover { background: var(--gray-100); }
+    .q-num {
+      min-width: 24px; height: 24px;
+      background: var(--brand);
+      color: #fff;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .q-text { font-size: 13px; font-weight: 500; color: var(--gray-900); flex: 1; line-height: 1.5; }
+    .q-chevron { color: #9ca3af; font-size: 12px; flex-shrink: 0; transition: transform .2s; margin-top: 3px; }
+    .question-card.open .q-chevron { transform: rotate(180deg); }
+
+    .q-body { display: none; padding: 0 14px 14px 48px; }
+    .question-card.open .q-body { display: block; }
+
+    .q-row { margin-top: 8px; }
+    .q-label { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
+    .q-value { font-size: 13px; color: var(--gray-700); line-height: 1.55; }
+    .follow-up {
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: #f0f9ff;
+      border-left: 3px solid #38bdf8;
+      border-radius: 0 6px 6px 0;
+      font-size: 12px;
+      color: #0369a1;
+    }
+    .follow-up strong { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
+
+    /* ── Red flags ── */
+    .red-flag-card {
+      background: var(--danger-light);
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    .rf-header {
+      padding: 12px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .rf-header:hover { background: #fee2e2; }
+    .rf-icon { font-size: 18px; flex-shrink: 0; }
+    .rf-title { font-size: 13px; font-weight: 600; color: var(--danger); flex: 1; }
+    .rf-chevron { color: #f87171; font-size: 12px; flex-shrink: 0; transition: transform .2s; margin-top: 2px; }
+    .red-flag-card.open .rf-chevron { transform: rotate(180deg); }
+    .rf-body { display: none; padding: 0 14px 14px 42px; }
+    .red-flag-card.open .rf-body { display: block; }
+    .rf-row { margin-top: 8px; }
+    .rf-label { font-size: 11px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 3px; }
+    .rf-value { font-size: 13px; color: var(--gray-700); line-height: 1.55; }
+    .rf-probe {
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: #fff7ed;
+      border-left: 3px solid var(--warn);
+      border-radius: 0 6px 6px 0;
+      font-size: 12px;
+      color: #92400e;
+    }
+    .rf-probe strong { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
+
+    /* ── Rubric ── */
+    .rubric-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .rubric-table th { text-align: left; padding: 8px 12px; background: var(--gray-100); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--gray-600); border-bottom: 1px solid var(--gray-200); }
+    .rubric-table td { padding: 10px 12px; border-bottom: 1px solid var(--gray-100); vertical-align: top; }
+    .rubric-table tr:last-child td { border-bottom: none; }
+    .weight-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+    .weight-high   { background: #fee2e2; color: var(--danger); }
+    .weight-medium { background: #fef3c7; color: #92400e; }
+    .weight-low    { background: #f0fdf4; color: var(--success); }
+
+    /* ── Tips ── */
+    .tips-list { display: flex; flex-direction: column; gap: 8px; }
+    .tip-item {
+      display: flex;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--success-light);
+      border: 1px solid #a7f3d0;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #065f46;
+      line-height: 1.5;
+    }
+    .tip-icon { flex-shrink: 0; }
+
+    /* ── Error ── */
+    .error-box {
+      margin: 16px;
+      padding: 12px 16px;
+      background: var(--danger-light);
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--danger);
+    }
+
+    @media (max-width: 800px) {
+      .container { grid-template-columns: 1fr; }
+      .results-panel { grid-column: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🎯</div>
+  <div>
+    <h1>Interview Support Agent</h1>
+    <p>Kohlpharma GmbH · Merzig — Helping non-technical hiring managers run great interviews</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Input panel -->
+  <div class="panel input-panel">
+    <div class="panel-header">📋 Job Description</div>
+
+    <div class="sample-jobs">
+      <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">Load a sample job offer:</div>
+      {% for key, job in sample_jobs.items() %}
+      <button class="sample-btn" onclick="loadSample('{{ key }}')" id="btn-{{ key }}">
+        {{ job.title }}
+        {% if 'Engineer' in job.title and 'GTM' not in job.title and 'Forward' not in job.title %}
+          <span class="badge badge-hr">People</span>
+        {% elif 'GTM' in job.title %}
+          <span class="badge badge-hybrid">Hybrid</span>
+        {% else %}
+          <span class="badge badge-tech">Technical</span>
+        {% endif %}
+      </button>
+      {% endfor %}
+    </div>
+
+    <div class="divider">— or paste your own job description —</div>
+
+    <textarea id="jobText" placeholder="Paste the full job description here...&#10;&#10;Include role title, responsibilities, required qualifications, and any details about expectations. The more context you give, the better the interview questions."></textarea>
+
+    <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">
+      <span id="btnIcon">✨</span>
+      <span id="btnText">Generate Interview Guide</span>
+    </button>
+  </div>
+
+  <!-- Results panel -->
+  <div class="panel results-panel" id="resultsPanel">
+    <div class="panel-header">📄 Interview Guide</div>
+    <div class="placeholder" id="placeholder">
+      <div class="icon">🤖</div>
+      <p>Select a sample job offer or paste your own job description,<br>then click <strong>Generate Interview Guide</strong>.</p>
+    </div>
+    <div class="loading" id="loadingDiv" style="display:none">
+      <div class="spinner"></div>
+      <div>Analyzing job description…</div>
+      <div class="loading-steps" id="loadingStep">Parsing requirements with Flash Lite…</div>
+    </div>
+    <div id="errorBox" style="display:none"></div>
+    <div id="guideContent" style="display:none"></div>
+  </div>
+
+</div>
+
+<script>
+const SAMPLES = {{ sample_jobs | tojson }};
+
+function loadSample(key) {
+  document.querySelectorAll('.sample-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-' + key).classList.add('active');
+  document.getElementById('jobText').value = SAMPLES[key].text;
+}
+
+async function analyze() {
+  const jobText = document.getElementById('jobText').value.trim();
+  if (!jobText || jobText.length < 50) {
+    alert('Please enter a job description.');
+    return;
+  }
+
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  document.getElementById('btnIcon').textContent = '⏳';
+  document.getElementById('btnText').textContent = 'Generating…';
+  document.getElementById('placeholder').style.display = 'none';
+  document.getElementById('errorBox').style.display = 'none';
+  document.getElementById('guideContent').style.display = 'none';
+  document.getElementById('loadingDiv').style.display = 'block';
+
+  const stepEl = document.getElementById('loadingStep');
+  let charCount = 0;
+
+  try {
+    const resp = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ job_text: jobText }),
+    });
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop(); // keep incomplete line
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const payload = line.slice(6);
+
+        if (payload.startsWith('[DONE]')) {
+          document.getElementById('loadingDiv').style.display = 'none';
+          try {
+            const guide = JSON.parse(payload.slice(7));
+            renderGuide(guide);
+          } catch (e) {
+            showError('Parse error: ' + e.message);
+          }
+        } else if (payload.startsWith('[ERROR]')) {
+          document.getElementById('loadingDiv').style.display = 'none';
+          showError(JSON.parse(payload.slice(8)));
+        } else {
+          // streaming token — update progress counter
+          try {
+            charCount += JSON.parse(payload).length;
+            stepEl.textContent = `Generating… ${charCount} characters`;
+          } catch {}
+        }
+      }
+    }
+  } catch (e) {
+    document.getElementById('loadingDiv').style.display = 'none';
+    showError('Network error: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    document.getElementById('btnIcon').textContent = '✨';
+    document.getElementById('btnText').textContent = 'Generate Interview Guide';
+  }
+}
+
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.innerHTML = `<div class="error-box">⚠️ ${escHtml(msg)}</div>`;
+  box.style.display = 'block';
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderGuide(guide) {
+  const cats = guide.question_categories || [];
+  const flags = guide.red_flags || [];
+  const rubric = guide.scoring_rubric || [];
+  const tips = guide.hiring_manager_tips || [];
+
+  const totalQ = cats.reduce((n, c) => n + (c.questions||[]).length, 0);
+
+  let html = `
+    <div class="overview-box">
+      <strong>📌 ${escHtml(guide.role_title || 'Role Overview')}</strong>
+      ${escHtml(guide.interview_overview || '')}
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(event,'tab-questions')">
+        Questions <span class="tab-count">${totalQ}</span>
+      </div>
+      <div class="tab" onclick="switchTab(event,'tab-redflags')">
+        🚩 Red Flags <span class="tab-count">${flags.length}</span>
+      </div>
+      <div class="tab" onclick="switchTab(event,'tab-rubric')">
+        Scoring Rubric
+      </div>
+      <div class="tab" onclick="switchTab(event,'tab-tips')">
+        💡 Tips
+      </div>
+    </div>
+  `;
+
+  // Questions tab
+  html += `<div class="tab-content active" id="tab-questions">`;
+  cats.forEach(cat => {
+    html += `<div class="category-section">
+      <div class="category-title">${escHtml(cat.icon||'')} ${escHtml(cat.category)}</div>`;
+    (cat.questions||[]).forEach((q, i) => {
+      html += `
+        <div class="question-card" onclick="toggleCard(this)">
+          <div class="q-header">
+            <div class="q-num">${i+1}</div>
+            <div class="q-text">${escHtml(q.question)}</div>
+            <div class="q-chevron">▼</div>
+          </div>
+          <div class="q-body">
+            <div class="q-row">
+              <div class="q-label">Why ask this</div>
+              <div class="q-value">${escHtml(q.purpose||'')}</div>
+            </div>
+            <div class="q-row">
+              <div class="q-label">What a strong answer looks like</div>
+              <div class="q-value">${escHtml(q.what_good_looks_like||'')}</div>
+            </div>
+            ${q.follow_up ? `<div class="follow-up"><strong>Follow-up</strong>${escHtml(q.follow_up)}</div>` : ''}
+          </div>
+        </div>`;
+    });
+    html += `</div>`;
+  });
+  html += `</div>`;
+
+  // Red flags tab
+  html += `<div class="tab-content" id="tab-redflags">`;
+  if (flags.length === 0) {
+    html += `<p style="padding:16px;color:#6b7280;font-size:13px;">No red flags identified.</p>`;
+  }
+  flags.forEach((rf, i) => {
+    html += `
+      <div class="red-flag-card" onclick="toggleCard(this)">
+        <div class="rf-header">
+          <div class="rf-icon">🚩</div>
+          <div class="rf-title">${escHtml(rf.flag)}</div>
+          <div class="rf-chevron">▼</div>
+        </div>
+        <div class="rf-body">
+          <div class="rf-row">
+            <div class="rf-label">What to listen for</div>
+            <div class="rf-value">${escHtml(rf.what_to_listen_for||'')}</div>
+          </div>
+          <div class="rf-row">
+            <div class="rf-label">Why it matters</div>
+            <div class="rf-value">${escHtml(rf.why_it_matters||'')}</div>
+          </div>
+          ${rf.how_to_probe ? `<div class="rf-probe"><strong>How to probe</strong>${escHtml(rf.how_to_probe)}</div>` : ''}
+        </div>
+      </div>`;
+  });
+  html += `</div>`;
+
+  // Rubric tab
+  html += `<div class="tab-content" id="tab-rubric">
+    <table class="rubric-table">
+      <thead><tr><th>Dimension</th><th>Weight</th><th>What to Assess</th></tr></thead>
+      <tbody>`;
+  rubric.forEach(r => {
+    const wCls = r.weight === 'high' ? 'weight-high' : r.weight === 'low' ? 'weight-low' : 'weight-medium';
+    html += `<tr>
+      <td><strong>${escHtml(r.dimension||'')}</strong></td>
+      <td><span class="weight-badge ${wCls}">${escHtml(r.weight||'')}</span></td>
+      <td>${escHtml(r.description||'')}</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>`;
+
+  // Tips tab
+  html += `<div class="tab-content" id="tab-tips"><div class="tips-list">`;
+  tips.forEach(t => {
+    html += `<div class="tip-item"><span class="tip-icon">✅</span><span>${escHtml(t)}</span></div>`;
+  });
+  html += `</div></div>`;
+
+  const el = document.getElementById('guideContent');
+  el.innerHTML = html;
+  el.style.display = 'block';
+}
+
+function toggleCard(card) {
+  card.classList.toggle('open');
+}
+
+function switchTab(evt, tabId) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  evt.currentTarget.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+</script>
+
+</body>
+</html>
