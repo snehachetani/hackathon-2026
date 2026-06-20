@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Globus Group — Invoice Agent</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
+
+  header { background: #1a1a2e; color: white; padding: 18px 32px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+  header h1 { font-size: 1.25rem; font-weight: 600; }
+  header span { font-size: .85rem; color: #aaa; margin-left: auto; }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 20px; }
+
+  /* Upload zone */
+  .upload-section { background: white; border-radius: 12px; padding: 32px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 24px; }
+  .upload-section h2 { font-size: 1rem; font-weight: 600; margin-bottom: 20px; color: #444; }
+  .drop-zone { border: 2px dashed #c5cae9; border-radius: 10px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all .2s; }
+  .drop-zone:hover, .drop-zone.dragover { border-color: #5c6bc0; background: #f3f4ff; }
+  .drop-zone p { color: #888; font-size: .9rem; margin-top: 8px; }
+  .drop-zone strong { color: #5c6bc0; }
+  #file-input { display: none; }
+  .file-list { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .file-chip { background: #eef; border: 1px solid #c5cae9; border-radius: 20px; padding: 4px 12px; font-size: .8rem; color: #3949ab; }
+
+  .actions { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
+  .btn { padding: 10px 22px; border: none; border-radius: 8px; font-size: .9rem; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .btn-primary { background: #3949ab; color: white; }
+  .btn-primary:hover:not(:disabled) { background: #283593; }
+  .btn-email { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+  .btn-email:hover:not(:disabled) { background: #c8e6c9; }
+  .minutes-input { display: flex; align-items: center; gap: 8px; font-size: .85rem; color: #555; }
+  .minutes-input input { width: 56px; padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: .9rem; text-align: center; }
+
+  /* Progress */
+  #progress-section { display: none; margin-bottom: 24px; }
+  .progress-bar-wrap { background: #e8eaf6; border-radius: 8px; height: 8px; overflow: hidden; margin-top: 10px; }
+  .progress-bar { height: 100%; background: #3949ab; width: 0%; transition: width .4s; border-radius: 8px; }
+  .progress-label { font-size: .85rem; color: #555; margin-top: 6px; }
+
+  /* Summary bar */
+  #summary-bar { display: none; background: white; border-radius: 10px; padding: 16px 24px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 24px; display: none; flex-wrap: wrap; gap: 20px; align-items: center; }
+  .summary-stat { text-align: center; }
+  .summary-stat .num { font-size: 1.6rem; font-weight: 700; }
+  .summary-stat .lbl { font-size: .75rem; color: #888; text-transform: uppercase; letter-spacing: .05em; }
+  .num.approved { color: #2e7d32; }
+  .num.rejected { color: #c62828; }
+  .num.pending  { color: #f57f17; }
+  .num.total    { color: #1a237e; }
+
+  /* Cards grid */
+  #cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
+
+  .card { background: white; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.08); overflow: hidden; transition: box-shadow .2s; }
+  .card:hover { box-shadow: 0 4px 14px rgba(0,0,0,.12); }
+  .card-header { padding: 14px 18px 10px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: flex-start; }
+  .card-header .vendor { font-weight: 700; font-size: .95rem; }
+  .card-header .filename { font-size: .72rem; color: #aaa; margin-top: 2px; }
+  .dept-badge { font-size: .7rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; white-space: nowrap; }
+  .dept-IT         { background: #e3f2fd; color: #1565c0; }
+  .dept-FACILITIES { background: #e8f5e9; color: #2e7d32; }
+  .dept-FINANCE    { background: #fff3e0; color: #e65100; }
+  .dept-HR         { background: #f3e5f5; color: #6a1b9a; }
+  .dept-ADMIN      { background: #f5f5f5; color: #424242; }
+
+  .card-body { padding: 14px 18px; }
+  .card-row { display: flex; justify-content: space-between; font-size: .82rem; margin-bottom: 6px; }
+  .card-row .label { color: #999; }
+  .card-row .value { font-weight: 500; text-align: right; max-width: 60%; }
+  .amount { font-size: 1.1rem; font-weight: 700; color: #1a237e; }
+  .summary-text { font-size: .78rem; color: #666; margin-top: 10px; line-height: 1.4; font-style: italic; }
+
+  .card-footer { padding: 12px 18px; border-top: 1px solid #f0f0f0; display: flex; gap: 10px; }
+  .btn-approve { flex: 1; background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+  .btn-approve:hover:not(:disabled) { background: #c8e6c9; }
+  .btn-reject  { flex: 1; background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+  .btn-reject:hover:not(:disabled)  { background: #ffcdd2; }
+  .btn-sm { padding: 7px 0; border-radius: 7px; font-size: .82rem; font-weight: 600; cursor: pointer; transition: background .15s; border: 1px solid transparent; }
+  .btn-sm:disabled { opacity: .35; cursor: default; }
+
+  .status-pill { font-size: .75rem; font-weight: 700; padding: 3px 10px; border-radius: 10px; text-align: center; }
+  .status-approved { background: #e8f5e9; color: #2e7d32; }
+  .status-rejected { background: #ffebee; color: #c62828; }
+  .status-error    { background: #fce4ec; color: #880e4f; }
+
+  .card-processing { opacity: .55; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #c5cae9; border-top-color: #3949ab; border-radius: 50%; animation: spin .7s linear infinite; margin-right: 6px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state { text-align: center; color: #bbb; padding: 60px 20px; grid-column: 1/-1; }
+  .empty-state p { margin-top: 8px; font-size: .9rem; }
+
+  .error-msg { background: #ffebee; color: #c62828; border-radius: 8px; padding: 12px 18px; font-size: .85rem; margin-bottom: 16px; display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+  <h1>Globus Group &mdash; Invoice Processing Agent</h1>
+  <span>Powered by Gemini 2.5 Flash</span>
+</header>
+
+<div class="container">
+
+  <div id="error-msg" class="error-msg"></div>
+
+  <div class="upload-section">
+    <h2>Process Invoices</h2>
+    <div class="drop-zone" id="drop-zone">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9fa8da" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <p><strong>Click to upload</strong> or drag &amp; drop invoices here</p>
+      <p>PDF, PNG, JPG, DOCX supported</p>
+      <input type="file" id="file-input" multiple accept=".pdf,.png,.jpg,.jpeg,.docx">
+    </div>
+    <div class="file-list" id="file-list"></div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="btn-process" disabled onclick="processFiles()">
+        Process Uploaded Files
+      </button>
+      <div style="width:1px;background:#eee;margin:0 4px;"></div>
+      <button class="btn btn-email" id="btn-email" onclick="fetchEmail()">
+        &#x2709; Fetch from Gmail
+      </button>
+      <div class="minutes-input">
+        Last <input type="number" id="minutes-input" value="10" min="1" max="1440"> min
+      </div>
+    </div>
+  </div>
+
+  <div id="progress-section">
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+    <div class="progress-label" id="progress-label">Starting...</div>
+  </div>
+
+  <div id="summary-bar">
+    <div class="summary-stat"><div class="num total" id="s-total">0</div><div class="lbl">Total</div></div>
+    <div class="summary-stat"><div class="num pending" id="s-pending">0</div><div class="lbl">Pending</div></div>
+    <div class="summary-stat"><div class="num approved" id="s-approved">0</div><div class="lbl">Approved</div></div>
+    <div class="summary-stat"><div class="num rejected" id="s-rejected">0</div><div class="lbl">Rejected</div></div>
+  </div>
+
+  <div id="cards">
+    <div class="empty-state">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <p>Upload invoices or fetch from Gmail to get started</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let currentJobId = null;
+let pollTimer = null;
+let selectedFiles = [];
+
+// ── File selection ────────────────────────────────────────────────────────────
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('dragover');
+  handleFiles([...e.dataTransfer.files]);
+});
+fileInput.addEventListener('change', () => handleFiles([...fileInput.files]));
+
+function handleFiles(files) {
+  selectedFiles = files.filter(f => /\.(pdf|png|jpg|jpeg|docx)$/i.test(f.name));
+  const list = document.getElementById('file-list');
+  list.innerHTML = selectedFiles.map(f => `<span class="file-chip">📄 ${f.name}</span>`).join('');
+  document.getElementById('btn-process').disabled = selectedFiles.length === 0;
+}
+
+// ── API calls ─────────────────────────────────────────────────────────────────
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 6000);
+}
+
+async function processFiles() {
+  if (!selectedFiles.length) return;
+  const fd = new FormData();
+  selectedFiles.forEach(f => fd.append('files', f));
+  setButtonsDisabled(true);
+  const res = await fetch('/api/process', { method: 'POST', body: fd });
+  const data = await res.json();
+  if (data.error) { showError(data.error); setButtonsDisabled(false); return; }
+  startPolling(data.job_id, data.total);
+}
+
+async function fetchEmail() {
+  const minutes = parseInt(document.getElementById('minutes-input').value) || 10;
+  setButtonsDisabled(true);
+  const res = await fetch('/api/fetch-email', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ minutes })
+  });
+  const data = await res.json();
+  if (data.error) { showError(data.error); setButtonsDisabled(false); return; }
+  startPolling(data.job_id, null);
+}
+
+function setButtonsDisabled(disabled) {
+  document.getElementById('btn-process').disabled = disabled || selectedFiles.length === 0;
+  document.getElementById('btn-email').disabled = disabled;
+}
+
+// ── Polling ───────────────────────────────────────────────────────────────────
+function startPolling(jobId, total) {
+  currentJobId = jobId;
+  renderedCards.clear();
+  if (pollTimer) clearInterval(pollTimer);
+  document.getElementById('cards').innerHTML = '';
+  document.getElementById('progress-section').style.display = 'block';
+  document.getElementById('summary-bar').style.display = 'flex';
+  setProgress(0, total, 'Processing...');
+  pollTimer = setInterval(() => poll(jobId), 1500);
+}
+
+const renderedCards = new Set();
+
+async function poll(jobId) {
+  const res = await fetch(`/api/status/${jobId}`);
+  const job = await res.json();
+  if (job.error) { clearInterval(pollTimer); return; }
+
+  const done = job.results.length;
+  const total = job.total || done;
+  setProgress(done, total, job.state === 'done' ? 'All done!' : `Processing ${done} / ${total}...`);
+
+  job.results.forEach(r => {
+    if (!renderedCards.has(r.file)) {
+      renderedCards.add(r.file);
+      renderCard(r, jobId);
+    } else {
+      updateCard(r);
+    }
+  });
+
+  updateSummary(job.results, total);
+
+  if (job.state === 'done') {
+    clearInterval(pollTimer);
+    setButtonsDisabled(false);
+    document.getElementById('progress-section').style.display = 'none';
+  }
+}
+
+function setProgress(done, total, label) {
+  const pct = total ? Math.round(done / total * 100) : 0;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = label;
+}
+
+function updateSummary(results, total) {
+  document.getElementById('s-total').textContent = total || results.length;
+  document.getElementById('s-pending').textContent  = results.filter(r => r.status === 'pending').length;
+  document.getElementById('s-approved').textContent = results.filter(r => r.status === 'approved').length;
+  document.getElementById('s-rejected').textContent = results.filter(r => r.status === 'rejected').length;
+}
+
+// ── Card rendering ────────────────────────────────────────────────────────────
+const DEPT_EMOJI = { IT: '💻', FACILITIES: '🏭', FINANCE: '💼', HR: '🏨', ADMIN: '🗂️' };
+
+function renderCard(r, jobId) {
+  const container = document.getElementById('cards');
+  const div = document.createElement('div');
+  div.className = 'card' + (r.status === 'error' ? '' : '');
+  div.id = 'card-' + r.file.replace(/\./g, '_');
+
+  if (r.status === 'error') {
+    div.innerHTML = `
+      <div class="card-header">
+        <div><div class="vendor">⚠ Error</div><div class="filename">${r.file}</div></div>
+      </div>
+      <div class="card-body"><div class="summary-text">${r.error || ''}</div></div>`;
+  } else {
+    const deptClass = 'dept-' + (r.department || 'FINANCE');
+    const emoji = DEPT_EMOJI[r.department] || '📄';
+    div.innerHTML = `
+      <div class="card-header">
+        <div>
+          <div class="vendor">${r.vendor || '—'}</div>
+          <div class="filename">${r.file}</div>
+        </div>
+        <span class="dept-badge ${deptClass}">${emoji} ${r.department}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-row"><span class="label">Type</span><span class="value">${r.invoice_type || '—'}</span></div>
+        <div class="card-row"><span class="label">Amount</span><span class="value amount">${r.amount || '—'}</span></div>
+        <div class="card-row"><span class="label">Date</span><span class="value">${r.date || '—'}</span></div>
+        <div class="card-row"><span class="label">Language</span><span class="value">${r.language || '—'}</span></div>
+        <div class="summary-text">${r.summary || ''}</div>
+      </div>
+      <div class="card-footer" id="footer-${r.file.replace(/\./g, '_')}">
+        <button class="btn btn-sm btn-approve" onclick="decide('${jobId}','${r.file}','approved',this)">✓ Approve</button>
+        <button class="btn btn-sm btn-reject"  onclick="decide('${jobId}','${r.file}','rejected',this)">✗ Reject</button>
+      </div>`;
+  }
+  container.appendChild(div);
+}
+
+function updateCard(r) {
+  const footerId = 'footer-' + r.file.replace(/\./g, '_');
+  const footer = document.getElementById(footerId);
+  if (!footer) return;
+  if (r.status === 'approved' || r.status === 'rejected') {
+    const cls = r.status === 'approved' ? 'status-approved' : 'status-rejected';
+    const label = r.status === 'approved' ? '✓ Approved' : '✗ Rejected';
+    footer.innerHTML = `<span class="status-pill ${cls}" style="width:100%;text-align:center">${label}</span>`;
+  }
+}
+
+async function decide(jobId, filename, action, btn) {
+  btn.disabled = true;
+  btn.closest('.card-footer').querySelectorAll('button').forEach(b => b.disabled = true);
+  await fetch('/api/decision', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ job_id: jobId, file: filename, action })
+  });
+  const res = await fetch(`/api/status/${jobId}`);
+  const job = await res.json();
+  const r = job.results.find(x => x.file === filename);
+  if (r) { updateCard(r); updateSummary(job.results, job.total); }
+}
+</script>
+</body>
+</html>
