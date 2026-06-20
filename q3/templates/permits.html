@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Work Permit Validator — Leistenschneider</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
+
+  header { background: #1a1a2e; color: white; padding: 18px 32px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.3); }
+  header h1 { font-size: 1.25rem; font-weight: 600; }
+  header span { font-size: .85rem; color: #aaa; margin-left: auto; }
+
+  .container { max-width: 680px; margin: 0 auto; padding: 32px 20px; }
+
+  .card { background: white; border-radius: 12px; padding: 32px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 24px; }
+  .card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 20px; color: #444; }
+
+  .drop-zone { border: 2px dashed #c5cae9; border-radius: 10px; padding: 48px 20px; text-align: center; cursor: pointer; transition: all .2s; }
+  .drop-zone:hover, .drop-zone.dragover { border-color: #5c6bc0; background: #f3f4ff; }
+  .drop-zone .icon { font-size: 2.5rem; margin-bottom: 10px; }
+  .drop-zone p { color: #888; font-size: .9rem; margin-top: 6px; }
+  .drop-zone strong { color: #5c6bc0; }
+  #file-input { display: none; }
+  #file-name { margin-top: 12px; font-size: .85rem; color: #3949ab; font-weight: 500; }
+
+  .btn { padding: 11px 28px; border: none; border-radius: 8px; font-size: .9rem; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .btn-primary { background: #3949ab; color: white; margin-top: 18px; width: 100%; }
+  .btn-primary:hover:not(:disabled) { background: #283593; }
+
+  /* Spinner */
+  .spinner-wrap { display: none; text-align: center; padding: 24px; }
+  .spinner { width: 40px; height: 40px; border: 4px solid #e8eaf6; border-top-color: #3949ab; border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner-wrap p { color: #888; font-size: .9rem; }
+
+  /* Result card */
+  #result-card { display: none; }
+
+  .verdict { display: flex; align-items: center; gap: 16px; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+  .verdict.valid { background: #e8f5e9; border: 1px solid #a5d6a7; }
+  .verdict.invalid { background: #ffebee; border: 1px solid #ef9a9a; }
+  .verdict.unknown { background: #fff8e1; border: 1px solid #ffe082; }
+  .verdict-icon { font-size: 2.2rem; }
+  .verdict-text h3 { font-size: 1.1rem; font-weight: 700; }
+  .verdict.valid .verdict-text h3 { color: #2e7d32; }
+  .verdict.invalid .verdict-text h3 { color: #c62828; }
+  .verdict.unknown .verdict-text h3 { color: #e65100; }
+  .verdict-text p { font-size: .85rem; color: #666; margin-top: 4px; }
+
+  .confidence-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .confidence-label { font-size: .85rem; color: #555; width: 130px; flex-shrink: 0; }
+  .bar-wrap { flex: 1; background: #e8eaf6; border-radius: 8px; height: 10px; overflow: hidden; }
+  .bar { height: 100%; border-radius: 8px; transition: width .6s ease; }
+  .bar.high { background: #43a047; }
+  .bar.medium { background: #fb8c00; }
+  .bar.low { background: #e53935; }
+  .confidence-pct { font-size: .9rem; font-weight: 700; width: 40px; text-align: right; }
+
+  .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .detail-item { background: #f8f9ff; border-radius: 8px; padding: 12px 14px; }
+  .detail-item .lbl { font-size: .72rem; color: #888; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+  .detail-item .val { font-size: .9rem; font-weight: 600; color: #1a1a2e; }
+  .detail-item .val.expired { color: #c62828; }
+  .detail-item .val.active { color: #2e7d32; }
+
+  .reason-box { background: #f8f9ff; border-radius: 8px; padding: 14px; margin-top: 16px; font-size: .85rem; color: #555; border-left: 3px solid #5c6bc0; }
+
+  .reset-btn { background: #f0f2f5; color: #555; border: 1px solid #ddd; margin-top: 20px; width: 100%; }
+  .reset-btn:hover { background: #e8eaf6; }
+
+  .error-box { background: #ffebee; border: 1px solid #ef9a9a; border-radius: 8px; padding: 14px; color: #c62828; font-size: .9rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Work Permit Validator</h1>
+  </div>
+  <span>Leistenschneider Personaldienstleistungen GmbH</span>
+</header>
+
+<div class="container">
+  <div class="card" id="upload-card">
+    <h2>Upload Work Permit Document</h2>
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <div class="icon">📄</div>
+      <strong>Click to upload</strong> or drag and drop
+      <p>PDF work permits (Aufenthaltstitel / Arbeitserlaubnis)</p>
+    </div>
+    <input type="file" id="file-input" accept=".pdf">
+    <div id="file-name"></div>
+    <button class="btn btn-primary" id="validate-btn" disabled onclick="submitFile()">Validate Permit</button>
+  </div>
+
+  <div class="spinner-wrap" id="spinner">
+    <div class="spinner"></div>
+    <p>Analyzing document with AI...</p>
+  </div>
+
+  <div class="card" id="result-card">
+    <h2>Validation Result</h2>
+
+    <div class="verdict" id="verdict-box">
+      <div class="verdict-icon" id="verdict-icon"></div>
+      <div class="verdict-text">
+        <h3 id="verdict-title"></h3>
+        <p id="verdict-sub"></p>
+      </div>
+    </div>
+
+    <!-- confidence row hidden for now
+    <div class="confidence-row">
+      <span class="confidence-label">Confidence</span>
+      <div class="bar-wrap"><div class="bar" id="conf-bar"></div></div>
+      <span class="confidence-pct" id="conf-pct"></span>
+    </div>
+    -->
+
+    <div class="details-grid" id="details-grid"></div>
+
+    <div class="reason-box" id="reason-box"></div>
+
+    <button class="btn reset-btn" onclick="reset()">Validate Another Document</button>
+  </div>
+
+  <div id="error-area"></div>
+</div>
+
+<script>
+  let selectedFile = null;
+
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f) setFile(f);
+  });
+  fileInput.addEventListener('change', () => { if (fileInput.files[0]) setFile(fileInput.files[0]); });
+
+  function setFile(f) {
+    selectedFile = f;
+    document.getElementById('file-name').textContent = '📎 ' + f.name;
+    document.getElementById('validate-btn').disabled = false;
+  }
+
+  async function submitFile() {
+    if (!selectedFile) return;
+    document.getElementById('upload-card').style.display = 'none';
+    document.getElementById('spinner').style.display = 'block';
+    document.getElementById('error-area').innerHTML = '';
+
+    const fd = new FormData();
+    fd.append('file', selectedFile);
+    const res = await fetch('/api/validate', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.error) { showError(data.error); return; }
+
+    pollStatus(data.job_id);
+  }
+
+  async function pollStatus(jobId) {
+    const res = await fetch('/api/validate/status/' + jobId);
+    const data = await res.json();
+    if (data.state === 'processing') {
+      setTimeout(() => pollStatus(jobId), 800);
+      return;
+    }
+    document.getElementById('spinner').style.display = 'none';
+    if (data.state === 'error') { showError(data.error); return; }
+    renderResult(data.result);
+  }
+
+  function renderResult(r) {
+    const card = document.getElementById('result-card');
+    card.style.display = 'block';
+
+    // Verdict
+    const box = document.getElementById('verdict-box');
+    const icon = document.getElementById('verdict-icon');
+    const title = document.getElementById('verdict-title');
+    const sub = document.getElementById('verdict-sub');
+
+    if (!r.is_work_permit) {
+      box.className = 'verdict unknown';
+      icon.textContent = '⚠️';
+      title.textContent = 'Not a Work Permit';
+      sub.textContent = 'This document does not appear to be a valid work permit.';
+    } else if (r.is_currently_valid === false) {
+      box.className = 'verdict invalid';
+      icon.textContent = '❌';
+      title.textContent = 'Work Permit — EXPIRED';
+      sub.textContent = 'This is a work permit but it has expired and is no longer valid.';
+    } else {
+      box.className = 'verdict valid';
+      icon.textContent = '✅';
+      title.textContent = 'Work Permit — VALID';
+      sub.textContent = 'This document is a valid, active work permit.';
+    }
+
+    // Details
+    const validUntilClass = r.is_currently_valid === false ? 'expired' : (r.is_currently_valid ? 'active' : '');
+    const details = [
+      { lbl: 'Holder', val: r.holder_name || '—' },
+      { lbl: 'Document Type', val: r.document_type || '—' },
+      { lbl: 'Valid Until', val: r.valid_until || '—', cls: validUntilClass },
+      { lbl: 'Employment Type', val: r.employment_type || '—' },
+      { lbl: 'Issuing Authority', val: r.issuing_authority || '—' },
+      { lbl: 'Currently Valid', val: r.is_currently_valid === true ? 'Yes' : r.is_currently_valid === false ? 'No' : '—', cls: validUntilClass },
+    ];
+    const grid = document.getElementById('details-grid');
+    grid.innerHTML = details.map(d =>
+      `<div class="detail-item"><div class="lbl">${d.lbl}</div><div class="val ${d.cls||''}">${d.val}</div></div>`
+    ).join('');
+
+    // Reason
+    document.getElementById('reason-box').textContent = r.reason || '';
+  }
+
+  function showError(msg) {
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('upload-card').style.display = 'block';
+    document.getElementById('error-area').innerHTML = `<div class="error-box">Error: ${msg}</div>`;
+  }
+
+  function reset() {
+    document.getElementById('result-card').style.display = 'none';
+    document.getElementById('upload-card').style.display = 'block';
+    document.getElementById('file-name').textContent = '';
+    document.getElementById('validate-btn').disabled = true;
+    selectedFile = null;
+    fileInput.value = '';
+  }
+</script>
+</body>
+</html>
