@@ -6,8 +6,7 @@
 q1/   — Invoice Web UI (Globus Group)
 q2/   — Shift Replacement Agent (UKS Hospital)
 q3/   — Work Permit Validator
-q4/   — Interview Support Agent (Kohlpharma)
-q5/   — Invoice CLI Processor (Globus Group)
+q5/   — Interview Support Agent (Kohlpharma)
 q6/   — Marketing Filmmaker Agent (Dr. Theiss)
 q7/   — Customer Targeting Analytics (Dr. Theiss)
 ```
