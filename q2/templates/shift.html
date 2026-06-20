@@ -1,0 +1,763 @@
+<title>UKS · Schichtvertretung</title>
+<style>
+  :root {
+    --ground:      #F7F6F3;
+    --text:        #1A1A2E;
+    --muted:       #7A7872;
+    --border:      #D8D4CE;
+    --accent:      #C94F2A;
+    --success:     #2A7D4F;
+    --term-bg:     #101820;
+    --term-text:   #C8DCC4;
+    --term-dim:    #526858;
+    --term-teal:   #7EC8C8;
+    --term-purple: #B8A8E0;
+    --term-green:  #5EC87C;
+    --term-red:    #E07C7C;
+    --term-amber:  #E8C87C;
+    --mono: 'Courier New', Courier, monospace;
+    --sans: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--ground);
+    color: var(--text);
+    font-family: var(--sans);
+    overflow: hidden;
+  }
+
+  /* ── Header ─────────────────────────────────────────────────────── */
+  .hdr {
+    background: var(--term-bg);
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 22px;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .hdr-brand {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    color: var(--term-text);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .hdr-brand strong { color: var(--accent); font-size: 14px; }
+  .hdr-brand span   { color: var(--term-dim); font-size: 10px; letter-spacing: 0.12em; }
+
+  .hdr-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--term-dim);
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--term-dim); flex-shrink: 0; transition: background .3s; }
+  .dot.active { background: var(--accent); animation: blink 1s ease-in-out infinite; }
+  .dot.done   { background: var(--success); animation: none; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+  /* ── Layout ─────────────────────────────────────────────────────── */
+  .layout {
+    display: flex;
+    height: calc(100% - 44px);
+  }
+
+  /* ── Left panel ──────────────────────────────────────────────────── */
+  .left-panel {
+    width: 340px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Input section — fixed, does not scroll */
+  .input-section {
+    flex-shrink: 0;
+    padding: 20px 18px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 7px;
+  }
+
+  .pills { display: flex; flex-direction: column; gap: 5px; }
+  .pill {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 8px 10px;
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    font-family: var(--sans);
+    transition: border-color .15s, background .15s;
+  }
+  .pill:hover    { border-color: var(--accent); background: #FEF9F7; }
+  .pill.selected { border-color: var(--accent); background: #FEF9F7; }
+  .pill-tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 7.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    background: var(--accent);
+    color: #fff;
+    padding: 1px 5px;
+    border-radius: 2px;
+    margin-right: 6px;
+    vertical-align: 1px;
+  }
+
+  textarea {
+    width: 100%;
+    padding: 10px 11px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-family: var(--sans);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text);
+    background: #fff;
+    resize: none;
+    height: 80px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  textarea:focus { border-color: var(--text); }
+  textarea::placeholder { color: #AEAAA4; }
+
+  .run-btn {
+    width: 100%;
+    padding: 10px 16px;
+    background: var(--text);
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: background .15s;
+  }
+  .run-btn:hover:not(:disabled) { background: var(--accent); }
+  .run-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  .spinner {
+    width: 12px; height: 12px;
+    border: 2px solid rgba(255,255,255,.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Candidates panel ────────────────────────────────────────────── */
+  .cand-panel {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 18px;
+    display: none;  /* shown once candidates arrive */
+  }
+  .cand-panel.visible { display: block; }
+  .cand-panel::-webkit-scrollbar { width: 3px; }
+  .cand-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .cand-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .cand-count {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  .cand-list { display: flex; flex-direction: column; gap: 5px; }
+
+  .cand-card {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: #fff;
+    transition: all .25s;
+  }
+  .cand-rank {
+    font-family: var(--mono);
+    font-size: 9.5px;
+    color: var(--muted);
+    width: 18px;
+    flex-shrink: 0;
+    text-align: center;
+  }
+  .cand-body { flex: 1; min-width: 0; }
+  .cand-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cand-meta {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .cand-score {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--border);
+    flex-shrink: 0;
+    background: var(--ground);
+    border-radius: 2px;
+    padding: 1px 5px;
+  }
+
+  /* Card states */
+  .cand-card.contacting {
+    border-color: var(--accent);
+    background: #FEF9F7;
+    animation: pulse-border 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse-border {
+    0%,100% { box-shadow: 0 0 0 0 rgba(201,79,42,.25); }
+    50%      { box-shadow: 0 0 0 3px rgba(201,79,42,.08); }
+  }
+  .cand-card.contacting .cand-rank  { color: var(--accent); }
+  .cand-card.contacting .cand-score { background: rgba(201,79,42,.1); color: var(--accent); }
+  .cand-card.contacting .cand-name  { color: var(--accent); }
+
+  .cand-card.accepted {
+    border-color: var(--success);
+    background: rgba(42,125,79,.05);
+    animation: none;
+  }
+  .cand-card.accepted .cand-name  { color: var(--success); }
+  .cand-card.accepted .cand-score { background: rgba(42,125,79,.1); color: var(--success); }
+  .cand-card.accepted .cand-rank  { color: var(--success); }
+
+  .cand-card.declined {
+    opacity: 0.38;
+    animation: none;
+    background: var(--ground);
+  }
+  .cand-card.declined .cand-name { text-decoration: line-through; }
+
+  /* Empty / hint state shown when no candidates yet */
+  .cand-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 18px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 11.5px;
+    line-height: 1.6;
+  }
+  .cand-empty strong { color: var(--text); display: block; margin-bottom: 6px; }
+
+  /* ── Terminal panel ──────────────────────────────────────────────── */
+  .term-panel {
+    flex: 1;
+    background: var(--term-bg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .term-topbar {
+    height: 36px;
+    flex-shrink: 0;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--term-dim);
+    letter-spacing: 0.08em;
+  }
+  .term-topbar-dots { display: flex; gap: 6px; }
+  .term-topbar-dots i {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .term-topbar-dots i:nth-child(1) { background: #FF5F56; }
+  .term-topbar-dots i:nth-child(2) { background: #FFBD2E; }
+  .term-topbar-dots i:nth-child(3) { background: #27C93F; }
+
+  /* Scan-line — runs only when agent is active */
+  .scanline {
+    position: absolute;
+    left: 0; right: 0;
+    height: 80px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .4s;
+    z-index: 2;
+    background: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(200,220,196,.04) 40%,
+      rgba(200,220,196,.07) 50%,
+      rgba(200,220,196,.04) 60%,
+      transparent 100%);
+  }
+  .scanline.active { opacity: 1; animation: scan 3.5s linear infinite; }
+  @keyframes scan { 0% { top: 36px; } 100% { top: 100%; } }
+
+  .term-output {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 20px 8px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.85;
+    color: var(--term-text);
+    scroll-behavior: smooth;
+  }
+  .term-output::-webkit-scrollbar { width: 3px; }
+  .term-output::-webkit-scrollbar-thumb { background: rgba(255,255,255,.08); border-radius: 2px; }
+
+  .t {
+    display: block;
+    white-space: pre-wrap;
+    word-break: break-word;
+    animation: lineIn .18s ease-out both;
+  }
+  @keyframes lineIn { from { opacity:0; transform:translateY(3px); } to { opacity:1; transform:translateY(0); } }
+
+  .t-tool      { color: var(--term-teal); }
+  .t-contact   { color: var(--term-purple); }
+  .t-msg       { color: var(--term-dim); font-style: italic; }
+  .t-accept    { color: var(--term-green); font-weight: bold; }
+  .t-decline   { color: var(--term-red); }
+  .t-confirmed { color: var(--term-green); }
+  .t-section   { color: #E8E4DC; margin-top: 4px; }
+  .t-divider   { color: rgba(255,255,255,.1); }
+  .t-result    { color: #fff; font-weight: bold; }
+  .t-loading   { color: var(--term-dim); font-style: italic; }
+  .t-normal    { color: var(--term-text); }
+  .t-empty     { color: transparent; height: 4px; display: block; }
+
+  /* Empty state overlay */
+  .term-empty {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+    user-select: none;
+  }
+  .term-empty-glyph { font-family: var(--mono); font-size: 32px; color: rgba(200,220,196,.08); line-height: 1; margin-bottom: 14px; }
+  .term-empty-text  { font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(200,220,196,.15); }
+
+  /* Result card */
+  .result-card {
+    margin: 0 20px 18px;
+    padding: 14px 16px;
+    border-radius: 3px;
+    display: none;
+    font-family: var(--mono);
+  }
+  .result-card.show { display: block; animation: slideUp .3s ease-out both; }
+  @keyframes slideUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+  .result-card.filled     { background: rgba(42,125,79,.14); border: 1px solid rgba(94,200,124,.35); }
+  .result-card.not-filled { background: rgba(201,79,42,.12); border: 1px solid rgba(201,79,42,.4); }
+  .result-card-title { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 8px; }
+  .filled .result-card-title     { color: var(--term-green); }
+  .not-filled .result-card-title { color: var(--term-red); }
+  .result-card-rows { display: flex; flex-direction: column; gap: 3px; }
+  .result-card-row  { font-size: 11.5px; color: var(--term-text); display: flex; gap: 8px; }
+  .result-card-key  { color: var(--term-dim); width: 70px; flex-shrink: 0; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .t, .result-card, .scanline, .dot, .cand-card { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<!-- Header -->
+<header class="hdr">
+  <div class="hdr-brand">
+    <strong>UKS</strong>
+    <span>SCHICHTVERTRETUNGS&thinsp;&middot;&thinsp;AGENT</span>
+  </div>
+  <div class="hdr-status">
+    <div class="dot" id="statusDot"></div>
+    <span id="statusText">BEREIT</span>
+  </div>
+</header>
+
+<!-- Main -->
+<div class="layout">
+
+  <!-- Left panel -->
+  <aside class="left-panel">
+
+    <!-- Input section (fixed) -->
+    <div class="input-section">
+
+      <div>
+        <span class="section-label">Schnellszenarien</span>
+        <div class="pills">
+          <button class="pill" onclick="usePreset(this,
+            'Felix Haddad (HOSP-1059) just called in sick. ICU night shift tonight 19:00-07:00. Need an urgent replacement — must hold BLS and ACLS.')">
+            <span class="pill-tag">SZENARIO</span>
+            ICU Nachtschicht &mdash; Felix Haddad krank
+          </button>
+          <button class="pill" onclick="usePreset(this,
+            'Emergency nurse no-show for tonight night shift 19:00-07:00 in the Emergency department. Need a qualified replacement with BLS and ACLS.')">
+            <span class="pill-tag">SZENARIO</span>
+            Notaufnahme Nachtschicht &mdash; Ausfall
+          </button>
+          <button class="pill" onclick="usePreset(this,
+            'Registered Nurse called out sick for the ICU day shift 07:00-19:00 tomorrow. Certifications required: BLS, ACLS. Please find cover urgently.')">
+            <span class="pill-tag">SZENARIO</span>
+            ICU Tagschicht &mdash; Ersatz gesucht
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label class="section-label" for="msgInput">Nachricht an den Agenten</label>
+        <textarea
+          id="msgInput"
+          placeholder="Schichtlücke beschreiben — der Agent erledigt den Rest."
+          rows="4"
+        ></textarea>
+      </div>
+
+      <button class="run-btn" id="runBtn" onclick="runAgent()">
+        <div class="spinner" id="spinner"></div>
+        <span id="runLabel">Agenten starten</span>
+      </button>
+
+    </div>
+
+    <!-- Candidates section (scrollable, shown dynamically) -->
+    <div class="cand-panel" id="candPanel">
+      <div class="cand-header">
+        <span class="section-label" style="margin-bottom:0">Qualifizierte Kandidaten</span>
+        <span class="cand-count" id="candCount"></span>
+      </div>
+      <div class="cand-list" id="candList"></div>
+    </div>
+
+    <!-- Empty hint (shown when no candidates yet) -->
+    <div class="cand-empty" id="candEmpty">
+      <strong>6 Eignungskriterien</strong>
+      Status &middot; Rolle &middot; Zertifikate<br>
+      Schichtplan &middot; Ruhezeit &middot; Stundenbudget
+    </div>
+
+  </aside>
+
+  <!-- Terminal -->
+  <main class="term-panel">
+
+    <div class="term-topbar">
+      <div class="term-topbar-dots"><i></i><i></i><i></i></div>
+      <span id="termTitle">uks-shift-agent</span>
+      <span id="termMeta"></span>
+    </div>
+
+    <div class="scanline" id="scanline"></div>
+
+    <div class="term-empty" id="emptyState">
+      <div class="term-empty-glyph">&#9611;</div>
+      <div class="term-empty-text">Warten auf Eingabe</div>
+    </div>
+
+    <div class="term-output" id="termOutput"></div>
+
+    <div class="result-card" id="resultCard">
+      <div class="result-card-title" id="resultTitle"></div>
+      <div class="result-card-rows" id="resultRows"></div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  let running = false;
+  let resultBuffer = { lines: [], capturing: false };
+
+  // ── Preset loader ────────────────────────────────────────────────────
+  function usePreset(btn, text) {
+    document.querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+    btn.classList.add('selected');
+    document.getElementById('msgInput').value = text;
+  }
+
+  // ── Candidate panel ──────────────────────────────────────────────────
+  function showCandPanel() {
+    document.getElementById('candPanel').classList.add('visible');
+    document.getElementById('candEmpty').style.display = 'none';
+  }
+
+  function addCandidate(rank, id, name, dept, contract, ot, score, hrs) {
+    showCandPanel();
+    const list = document.getElementById('candList');
+    const card = document.createElement('div');
+    card.className = 'cand-card';
+    card.id = `cand-${id}`;
+    const otBadge = ot === 'Yes' ? ' &middot; OT&nbsp;&#10003;' : '';
+    card.innerHTML =
+      `<div class="cand-rank">#${rank}</div>` +
+      `<div class="cand-body">` +
+        `<div class="cand-name">${name}</div>` +
+        `<div class="cand-meta">${dept} &middot; ${contract}${otBadge}</div>` +
+      `</div>` +
+      `<div class="cand-score">${score}</div>`;
+    list.appendChild(card);
+  }
+
+  function updateCandCount(text) {
+    document.getElementById('candCount').textContent = text;
+  }
+
+  function setContacting(id) {
+    document.querySelectorAll('.cand-card.contacting')
+      .forEach(c => c.classList.remove('contacting'));
+    const card = document.getElementById(`cand-${id}`);
+    if (card) { card.classList.add('contacting'); card.scrollIntoView({ block: 'nearest' }); }
+  }
+
+  function setResponse(id, resp) {
+    const card = document.getElementById(`cand-${id}`);
+    if (!card) return;
+    card.classList.remove('contacting');
+    card.classList.add(resp === 'ACCEPT' ? 'accepted' : 'declined');
+  }
+
+  // ── Line classifier ──────────────────────────────────────────────────
+  function classify(raw) {
+    const t = raw.trim();
+    if (!t) return 'empty';
+    if (t.includes('Loading staff data')) return 'loading';
+    if (t.startsWith('[->]'))                             return 'tool';
+    if (t.includes('SMS  ->') || t.includes('Mail ->'))  return 'contact';
+    if (t.startsWith('"') || t.startsWith('Msg:'))       return 'msg';
+    if (t.includes('[OK]'))                               return 'accept';
+    if (t.includes('[NO]') || t.includes('[??]'))         return 'decline';
+    if (t.includes('[SCHEDULE UPDATED]'))                 return 'confirmed';
+    if (t.includes('AGENT REPORT') || t.includes('BERICHT')) return 'section';
+    if (/^[=\-]{4,}/.test(t))                            return 'divider';
+    if (t.includes('RESULT') || t.includes('ERGEBNIS'))  return 'result';
+    return 'normal';
+  }
+
+  // ── Append line — intercept special UI-control lines ─────────────────
+  function appendLine(raw) {
+    const t = raw.trim();
+
+    // Intercept structured data lines — update candidates panel, skip terminal
+    if (t.startsWith('[CAND]')) {
+      const p = t.slice(6).trim().split('|');
+      if (p.length >= 7) addCandidate(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7] || '');
+      return;
+    }
+    if (t.startsWith('[FOUND]')) {
+      // e.g. "[FOUND] 11 eligible / 89 excluded"
+      const m = t.match(/\[FOUND\]\s*(\d+)\s*eligible\s*\/\s*(\d+)\s*excluded/);
+      if (m) updateCandCount(`${m[1]} gefunden`);
+      return;
+    }
+    if (t.startsWith('[CONTACTING]')) {
+      setContacting(t.slice(12).trim());
+      return;
+    }
+    if (t.startsWith('[RESPONSE]')) {
+      const p = t.slice(10).trim().split('|');
+      if (p.length >= 2) setResponse(p[0], p[1]);
+      return;
+    }
+
+    // Normal terminal output
+    const out = document.getElementById('termOutput');
+    document.getElementById('emptyState').style.display = 'none';
+    const cls = classify(raw);
+    if (cls === 'empty') {
+      const sp = document.createElement('span');
+      sp.className = 't t-empty';
+      out.appendChild(sp);
+    } else {
+      const span = document.createElement('span');
+      span.className = `t t-${cls}`;
+      span.textContent = raw;
+      out.appendChild(span);
+    }
+    out.scrollTop = out.scrollHeight;
+  }
+
+  // ── Parse and show result card ───────────────────────────────────────
+  function parseResult(lines) {
+    const filled   = lines.some(l => l.includes('SHIFT FILLED'));
+    const assigned = (lines.find(l => l.includes('Assigned')) || '').split(':').slice(1).join(':').trim();
+    const dept     = (lines.find(l => l.includes('Dept')) || '').split(':').slice(1).join(':').trim();
+    const reached  = (lines.find(l => l.includes('Reached')) || '').split(':').slice(1).join(':').trim();
+    return { filled, assigned, dept, reached };
+  }
+
+  function showResult(lines) {
+    const r     = parseResult(lines);
+    const card  = document.getElementById('resultCard');
+    const title = document.getElementById('resultTitle');
+    const rows  = document.getElementById('resultRows');
+
+    card.className = `result-card show ${r.filled ? 'filled' : 'not-filled'}`;
+    title.textContent = r.filled ? 'Schicht besetzt' : 'Schicht nicht besetzt';
+    rows.innerHTML = '';
+
+    const data = r.filled
+      ? [['Assigned', r.assigned || '—'], ['Dept/Shift', r.dept || '—'], ['Contacted', r.reached || '—']]
+      : [['Contacted', r.reached || '—'], ['Action', 'Escalation required']];
+
+    data.forEach(([k, v]) => {
+      const row = document.createElement('div');
+      row.className = 'result-card-row';
+      row.innerHTML = `<span class="result-card-key">${k}</span><span>${v}</span>`;
+      rows.appendChild(row);
+    });
+  }
+
+  // ── Run agent ────────────────────────────────────────────────────────
+  async function runAgent() {
+    const msg = document.getElementById('msgInput').value.trim();
+    if (!msg || running) return;
+
+    running = true;
+    resultBuffer = { lines: [], capturing: false };
+
+    const btn      = document.getElementById('runBtn');
+    const lbl      = document.getElementById('runLabel');
+    const spn      = document.getElementById('spinner');
+    const dot      = document.getElementById('statusDot');
+    const statusTx = document.getElementById('statusText');
+    const scanline = document.getElementById('scanline');
+    const termMeta = document.getElementById('termMeta');
+    const out      = document.getElementById('termOutput');
+    const card     = document.getElementById('resultCard');
+
+    // Reset state
+    btn.disabled = true;
+    lbl.textContent = 'Läuft…';
+    spn.style.display = 'block';
+    dot.className = 'dot active';
+    statusTx.textContent = 'AGENT AKTIV';
+    scanline.className = 'scanline active';
+    card.className = 'result-card';
+    out.innerHTML = '';
+    document.getElementById('emptyState').style.display = 'none';
+    termMeta.textContent = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+    // Reset candidates panel
+    document.getElementById('candPanel').classList.remove('visible');
+    document.getElementById('candList').innerHTML = '';
+    document.getElementById('candCount').textContent = '';
+    document.getElementById('candEmpty').style.display = '';
+
+    // Start job
+    let job_id;
+    try {
+      const res  = await fetch('/api/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      job_id = data.job_id;
+    } catch (e) {
+      appendLine(`  ERROR: ${e.message}`);
+      finish(dot, statusTx, btn, lbl, spn, scanline, false);
+      return;
+    }
+
+    // Stream output
+    const evtSource = new EventSource(`/api/stream/${job_id}`);
+
+    evtSource.onmessage = (e) => {
+      const payload = JSON.parse(e.data);
+      if (payload.done) {
+        evtSource.close();
+        showResult(resultBuffer.lines);
+        const filled = resultBuffer.lines.some(l => l.includes('SHIFT FILLED'));
+        finish(dot, statusTx, btn, lbl, spn, scanline, filled);
+        return;
+      }
+      const line = payload.line ?? '';
+      appendLine(line);
+
+      // Capture footer block for result parsing
+      if (line.includes('======')) {
+        resultBuffer.capturing = !resultBuffer.capturing;
+      } else if (resultBuffer.capturing) {
+        resultBuffer.lines.push(line);
+      }
+    };
+
+    evtSource.onerror = () => {
+      evtSource.close();
+      appendLine('  Connection lost.');
+      finish(dot, statusTx, btn, lbl, spn, scanline, false);
+    };
+  }
+
+  // ── Reset UI ─────────────────────────────────────────────────────────
+  function finish(dot, statusTx, btn, lbl, spn, scanline, success) {
+    running = false;
+    btn.disabled = false;
+    lbl.textContent = 'Agenten starten';
+    spn.style.display = 'none';
+    dot.className = 'dot done';
+    statusTx.textContent = success ? 'BESETZT' : 'ABGESCHLOSSEN';
+    scanline.className = 'scanline';
+  }
+
+  document.getElementById('msgInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runAgent(); }
+  });
+</script>

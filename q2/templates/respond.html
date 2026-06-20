@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UKS — Schichtvertretung</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #0d1b2a;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .card {
+    background: #162032;
+    border: 1px solid #253347;
+    border-radius: 12px;
+    padding: 48px 40px;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .hospital-logo {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #5a7fa0;
+    margin-bottom: 32px;
+  }
+
+  .icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    margin: 0 auto 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+  }
+
+  .icon-accept { background: rgba(42,125,79,0.2); border: 2px solid #2a7d4f; }
+  .icon-decline { background: rgba(180,60,60,0.15); border: 2px solid #b43c3c; }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #e8edf2;
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+
+  p {
+    font-size: 15px;
+    color: #7a9ab8;
+    line-height: 1.6;
+  }
+
+  .badge {
+    display: inline-block;
+    margin-top: 28px;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .badge-accept { background: rgba(42,125,79,0.2); color: #4db87a; }
+  .badge-decline { background: rgba(180,60,60,0.15); color: #e05555; }
+
+  .footer {
+    margin-top: 36px;
+    padding-top: 24px;
+    border-top: 1px solid #253347;
+    font-size: 11px;
+    color: #3e5872;
+    letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="hospital-logo">Universitätsklinikum des Saarlandes · UKS Homburg</div>
+
+  {% if action == "accept" %}
+    <div class="icon icon-accept">✓</div>
+    <h1>Schicht übernommen</h1>
+    <p>Vielen Dank! Ihre Zusage wurde erfolgreich übermittelt.<br>
+       Der Schichtplan wird entsprechend aktualisiert.</p>
+    <span class="badge badge-accept">Bestätigt</span>
+  {% else %}
+    <div class="icon icon-decline">✕</div>
+    <h1>Absage registriert</h1>
+    <p>Verstanden. Ihre Absage wurde vermerkt.<br>
+       Wir kontaktieren einen anderen Kollegen.</p>
+    <span class="badge badge-decline">Abgelehnt</span>
+  {% endif %}
+
+  <div class="footer">
+    UKS Schichtvertretungs-Agent &nbsp;·&nbsp; Diese Seite kann geschlossen werden.
+  </div>
+</div>
+</body>
+</html>
