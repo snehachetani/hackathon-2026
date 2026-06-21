@@ -1,3 +1,6 @@
 
 .env
 q6\static
+__pycache__/
+*.pyc
+*.pyo

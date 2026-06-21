@@ -90,5 +90,5 @@ def api_stream(job_id):
 
 
 if __name__ == "__main__":
-    print("UKS Shift Agent UI -> http://localhost:5001")
-    app.run(debug=False, port=5001, threaded=True)
+    print("UKS Shift Agent UI -> http://0.0.0.0:5001")
+    app.run(host="0.0.0.0", debug=False, port=5001, threaded=True)

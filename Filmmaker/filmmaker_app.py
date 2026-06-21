@@ -31,13 +31,20 @@ def index():
 def _run_job(job_id: str, sku: str, angle: str, platform: str, language: str):
     q = jobs[job_id]
     try:
-        for update in run_filmmaker_agent(sku, angle, platform, language,
-                                          video_dir=VIDEO_DIR):
+        for update in run_filmmaker_agent(
+            sku,
+            angle,
+            platform,
+            language,
+            video_dir=VIDEO_DIR,
+            use_veo=True,
+        ):
             q.put(update)
     except Exception as exc:
         q.put({"step": f"Error: {exc}", "done": True, "error": str(exc)})
     finally:
         q.put(None)
+        jobs.pop(job_id, None)
 
 
 @app.route("/generate", methods=["POST"])
@@ -79,4 +86,4 @@ def serve_video(filename: str):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5003)
+    app.run(host="0.0.0.0", debug=True, port=5003)
